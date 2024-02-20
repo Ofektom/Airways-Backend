@@ -32,6 +32,7 @@ public class Flight {
     private String pilotName;
     private int noOfChildren;
     private int noOfAdult;
+
     @ManyToMany
     private List<Passenger> passengers;
 }
