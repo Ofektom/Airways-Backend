@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
     private final JwtUtils jwtUtils;
 
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtils jwtUtils) {
@@ -75,4 +76,5 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             return "User not authenticated";
         }
     }
+
 }

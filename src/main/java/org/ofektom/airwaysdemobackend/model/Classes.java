@@ -28,7 +28,6 @@ public class Classes {
     private Seat seat;
     @ManyToOne
     private Flight flight;
-    @ManyToMany(mappedBy = "classes")
+    @OneToMany
     private List<Passenger> passengers;
-    // Getters and setters
 }

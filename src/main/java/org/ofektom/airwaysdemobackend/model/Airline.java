@@ -2,26 +2,27 @@ package org.ofektom.airwaysdemobackend.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.ofektom.airwaysdemobackend.enums.Type;
 
-import java.util.List;
+import java.util.Set;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Port {
+public class Airline {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private String location;
-    @Enumerated(EnumType.STRING)
-    private Type type;
-    private String portAbbr;
-    @OneToMany
-    private List<Flight> flights;
-    // Getters and setters
+    @ManyToMany
+    @JoinTable(
+            name = "airline_airport",
+            joinColumns = @JoinColumn(name = "airline_id"),
+            inverseJoinColumns = @JoinColumn(name = "airport_iata_code")
+    )
+    private Set<Airport> airports;
 }

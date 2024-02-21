@@ -18,7 +18,6 @@ public class SignupDto {
     @Email(message = "*Entry must be an email address")
     @NotEmpty(message = "*Enter your valid email address")
     private String email;
-    @NotNull
     @NotEmpty
     private String phoneNumber;
     @Pattern(regexp = "^.*(?=.{8,})(?=...*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=]).*$", message = "*Enter at least one uppercase,lowercase,digit and special character and minimum 8 characters")

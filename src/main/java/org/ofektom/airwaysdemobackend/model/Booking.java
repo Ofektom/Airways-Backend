@@ -1,5 +1,6 @@
 package org.ofektom.airwaysdemobackend.model;
 
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +8,6 @@ import lombok.NoArgsConstructor;
 import org.ofektom.airwaysdemobackend.enums.BookingStatus;
 
 import java.util.List;
-
 
 @Data
 @NoArgsConstructor
@@ -31,5 +31,4 @@ public class Booking {
     private Boolean pay;
     @Enumerated(EnumType.STRING)
     private BookingStatus bookingStatus;
-    // Getters and setters
 }

@@ -19,4 +19,5 @@ public class Seat {
     private int numberOfSeat;
     @ManyToOne
     private Flight flightName;
+    // Getters and setters
 }

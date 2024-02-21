@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.ofektom.airwaysdemobackend.dto.LoginDto;
 import org.ofektom.airwaysdemobackend.dto.SignupDto;
-import org.ofektom.airwaysdemobackend.event.RegistrationCompleteEvent;
 import org.ofektom.airwaysdemobackend.model.User;
 import org.ofektom.airwaysdemobackend.serviceImpl.UserServiceImpl;
 import org.ofektom.airwaysdemobackend.utils.GoogleJwtUtils;
@@ -30,8 +29,7 @@ public class AuthController {
 
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signupUser(@Valid @RequestBody SignupDto signupDto,
-                                             final HttpServletRequest request) throws RuntimeException {
+    public ResponseEntity<String> signupUser(@Valid @RequestBody SignupDto signupDto) throws RuntimeException {
         User user = userService.saveUser(signupDto);
 
         if(user != null) {

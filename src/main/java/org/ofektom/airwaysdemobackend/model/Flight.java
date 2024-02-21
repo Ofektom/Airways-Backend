@@ -2,7 +2,6 @@ package org.ofektom.airwaysdemobackend.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.ofektom.airwaysdemobackend.enums.FlightDirection;
@@ -10,8 +9,9 @@ import org.ofektom.airwaysdemobackend.enums.FlightDirection;
 import java.util.List;
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
-@NoArgsConstructor@Builder
+@Entity
 public class Flight {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,7 +24,6 @@ public class Flight {
     private String departureDate;
     private String arrivalPort;
     private String departurePort;
-
     @OneToMany(mappedBy = "flight")
     private List<Classes> classes;
     private int totalSeat;
@@ -32,7 +31,6 @@ public class Flight {
     private String pilotName;
     private int noOfChildren;
     private int noOfAdult;
-
     @ManyToMany
     private List<Passenger> passengers;
 }

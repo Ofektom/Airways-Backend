@@ -53,6 +53,11 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     @JsonIgnore
     private Role userRole;
+    @JsonIgnore
+    @AssertTrue(message = "Passwords do not match")
+    public boolean isPasswordMatching(){
+        return password != null && password.equals(confirmPassword);
+    }
 
     @JsonIgnore
     private Boolean isEnabled = false;
@@ -98,10 +103,5 @@ public class User implements UserDetails {
     @JsonIgnore
     public boolean isEnabled() {
         return this.isEnabled;
-    }
-    @JsonIgnore
-    @AssertTrue(message = "Passwords do not match")
-    public boolean isPasswordMatching(){
-        return password != null && password.equals(confirmPassword);
     }
 }

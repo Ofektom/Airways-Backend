@@ -76,9 +76,9 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(httpRequests ->
                         httpRequests
                                 .requestMatchers(
-                                        "").permitAll()
+                                        "/api/v1/auth").permitAll()
                                 .requestMatchers(
-                                        "").permitAll())
+                                        "/airports").authenticated())
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
