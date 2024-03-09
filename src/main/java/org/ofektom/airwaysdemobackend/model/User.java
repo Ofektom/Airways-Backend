@@ -62,11 +62,27 @@ public class User implements UserDetails {
     @JsonIgnore
     private Boolean isEnabled = false;
 
+    public User(String firstName, String lastName, String email, String phoneNumber, String password, Role userRole, Boolean isEnabled) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.password = password;
+        this.userRole = userRole;
+        this.isEnabled = isEnabled;
+    }
+
+    @JsonIgnore
     private String gender;
+    @JsonIgnore
     private String dateOfBirth;
+    @JsonIgnore
     private String state;
+    @JsonIgnore
     private String country;
+    @JsonIgnore
     private String passportNumber;
+    @JsonIgnore
     private String membershipNo;
 
     @Override

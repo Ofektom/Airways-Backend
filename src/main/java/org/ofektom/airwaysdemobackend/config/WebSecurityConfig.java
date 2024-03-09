@@ -1,5 +1,6 @@
 package org.ofektom.airwaysdemobackend.config;
 
+import org.ofektom.airwaysdemobackend.enums.Role;
 import org.ofektom.airwaysdemobackend.serviceImpl.UserServiceImpl;
 import org.ofektom.airwaysdemobackend.utils.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Configuration;
@@ -7,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -50,6 +53,11 @@ public class WebSecurityConfig {
         return source;
     }
 
+//    @Bean
+//    public JavaMailSender javaMailSender() {
+//        return new JavaMailSenderImpl();
+//    }
+//
 
     @Bean//bcryptPasswordEncoder is enabled for spring security hashing/salting of user's password information
     public PasswordEncoder passwordEncoder() {
@@ -74,11 +82,14 @@ public class WebSecurityConfig {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(httpRequests ->
-                        httpRequests
+                        httpRequests.requestMatchers(
+                                "/api/v1/flights/delete-flight/{Id}").hasAuthority(String.valueOf(Role.ADMIN))
                                 .requestMatchers(
-                                        "/api/v1/auth").permitAll()
+                                        "/api/v1/auth/**",
+                                        "/api/v1/flights/availableFlight",
+                                        "/api/v1/flights/fetch-all-flights").permitAll()
                                 .requestMatchers(
-                                        "/airports").authenticated())
+                                        "/airports/**").authenticated())
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())

@@ -1,52 +1,37 @@
-package org.ofektom.airwaysdemobackend.model;
+package org.ofektom.airwaysdemobackend.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.ofektom.airwaysdemobackend.enums.FlightDirection;
+import org.ofektom.airwaysdemobackend.model.Airport;
+import org.ofektom.airwaysdemobackend.model.Classes;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-@Entity
-public class Flight {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+@NoArgsConstructor
+public class FlightSearchDto {
     private Long id;
     private FlightDirection flightDirection;
-    @Column(unique = true)
     private String flightNo;
-    @ManyToOne
-    private Airline airline;
+    private String airline;
     private LocalDate arrivalDate;
     private LocalDate departureDate;
     private LocalTime arrivalTime;
     private LocalTime departureTime;
     private int duration;
+    private Airport arrivalPort;
     private LocalDate returnDate;
     private LocalTime returnTime;
-    @ManyToOne
-    private Airport arrivalPort;
-    @ManyToOne
     private Airport departurePort;
-    @OneToMany(mappedBy = "flight")
     private List<Classes> classes;
     private int totalSeat;
     private int availableSeat;
     private int noOfChildren;
     private int noOfAdult;
     private int noOfInfant;
-    @JsonIgnore
-    @ManyToMany
-    @JoinTable(
-            joinColumns = @JoinColumn(name = "flight_id"),
-            inverseJoinColumns = @JoinColumn(name = "passenger_id")
-    )
-    private List<Passenger> passengers;
 }
