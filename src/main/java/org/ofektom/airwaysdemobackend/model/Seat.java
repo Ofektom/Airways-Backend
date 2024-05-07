@@ -1,23 +1,36 @@
 package org.ofektom.airwaysdemobackend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @Entity
 public class Seat {
+    @JsonIgnore
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne
+    @JsonIgnore
+    @OneToOne
     private Classes className;
     private char seatAlphabet;
-    private int numberOfSeat;
+    private int totalNumberOfSeat;
+    @JsonIgnore
     @ManyToOne
     private Flight flightName;
-    // Getters and setters
+    private int availableSeat;
+    private int noOfOccupiedSeats;
+    @JsonIgnore
+    @OneToMany(cascade = CascadeType.REMOVE)
+    private List<SeatList> seatLists;
+
 }
+
+

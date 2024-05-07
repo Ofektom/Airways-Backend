@@ -3,73 +3,61 @@ package org.ofektom.airwaysdemobackend.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-@ControllerAdvice
+@RestControllerAdvice
 public class DefaultExceptionHandler {
-////////////////////////////NOT FOUND
-    @ExceptionHandler(TokenNotFoundException.class)
-    public ResponseEntity<ApiError> handleException(
-            TokenNotFoundException e,
-            HttpServletRequest request) {
-        return buildErrorResponse(request, HttpStatus.NOT_FOUND, e.getMessage());
-    }
-
-
-////////////////////UNAUTHORIZED
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiError> handleUnauthorizedException(
-            BadCredentialsException e, HttpServletRequest request) {
-        return buildErrorResponse(request, HttpStatus.UNAUTHORIZED, e.getMessage());
-    }
-
-/////////////BAD REQUEST
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ApiError> handleUploadProfileImageException(
-            UserNotFoundException e, HttpServletRequest request) {
-        return buildErrorResponse(request, HttpStatus.BAD_REQUEST, e.getMessage());
-    }
-
-    @ExceptionHandler(MailConnectionException.class)
-    public ResponseEntity<ApiError> handleUploadProfileImageException(
-            MailConnectionException e, HttpServletRequest request) {
-        return buildErrorResponse(request, HttpStatus.BAD_REQUEST, e.getMessage());
-    }
-
-    @ExceptionHandler(PasswordsDontMatchException.class)
-    public ResponseEntity<ApiError> handlePasswordsDontMatchException(
-            PasswordsDontMatchException e, HttpServletRequest request) {
-        return buildErrorResponse(request, HttpStatus.BAD_REQUEST, e.getMessage());
-    }
-
-    @ExceptionHandler(EmailIsTakenException.class)
-    public ResponseEntity<ApiError> handleEmailFoundInDBException(
-            EmailIsTakenException e, HttpServletRequest request) {
-        return buildErrorResponse(request, HttpStatus.BAD_REQUEST, e.getMessage());
-    }
-
-    @ExceptionHandler(InvalidTokenException.class)
-    public ResponseEntity<ApiError> handleInvalidTokenException(
-            InvalidTokenException e, HttpServletRequest request) {
-        return buildErrorResponse(request, HttpStatus.BAD_REQUEST, e.getMessage());
-    }
-
     @ExceptionHandler(UserNotVerifiedException.class)
     public ResponseEntity<ApiError> handleUserNotVerifiedException(
             UserNotVerifiedException e, HttpServletRequest request) {
         return buildErrorResponse(request, HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
-    //////////////////////////ERROR BUILDER///////////////////////////////////////////
+    @ExceptionHandler(UserNotEligibleException.class)
+    public ResponseEntity<ApiError> handleUserNotEligibleException(
+            UserNotEligibleException e, HttpServletRequest request) {
+        return buildErrorResponse(request, HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler(AirlineNotFoundException.class)
+    public ResponseEntity<ApiError> AirlineNotFoundException(
+            UserNotVerifiedException e, HttpServletRequest request) {
+        return buildErrorResponse(request, HttpStatus.NOT_FOUND, e.getMessage());
+    }
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiError> UserNotFoundException(
+            UserNotVerifiedException e, HttpServletRequest request) {
+        return buildErrorResponse(request, HttpStatus.NOT_FOUND, e.getMessage());
+    }
+    @ExceptionHandler(SeatListNotFoundException.class)
+    public ResponseEntity<ApiError> SeatListNotFoundException(
+            UserNotVerifiedException e, HttpServletRequest request) {
+        return buildErrorResponse(request, HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
+
+    @ExceptionHandler(PassengerNotFoundException.class)
+    public ResponseEntity<ApiError> PassengerNotFoundException(
+            UserNotVerifiedException e, HttpServletRequest request) {
+        return buildErrorResponse(request, HttpStatus.NOT_FOUND, e.getMessage());
+    }
+
+
 
     private ResponseEntity<ApiError> buildErrorResponse(
             HttpServletRequest request, HttpStatus status, String message) {
         return buildErrorResponse(request, status, message, null);
+
+    }
+
+    @ExceptionHandler(ClassNotFoundException.class)
+    public ResponseEntity<String> handleClassNotFound(
+            ClassNotFoundException e, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+
     }
 
     private ResponseEntity<ApiError> buildErrorResponse(
@@ -83,6 +71,4 @@ public class DefaultExceptionHandler {
         );
         return new ResponseEntity<>(apiError, status);
     }
-///////////////////////////////////////END /
 }
-

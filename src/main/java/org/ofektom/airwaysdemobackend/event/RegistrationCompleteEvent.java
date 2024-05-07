@@ -1,6 +1,5 @@
 package org.ofektom.airwaysdemobackend.event;
 
-
 import lombok.Getter;
 import lombok.Setter;
 import org.ofektom.airwaysdemobackend.model.User;

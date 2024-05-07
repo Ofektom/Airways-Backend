@@ -1,5 +1,6 @@
 package org.ofektom.airwaysdemobackend.controller;
 
+
 import org.ofektom.airwaysdemobackend.model.Airport;
 import org.ofektom.airwaysdemobackend.service.AirportService;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/airports")
+@CrossOrigin(origins = {"http://localhost:5173", "https://airway-ng.netlify.app"}, allowCredentials = "true")
 public class AirportController {
 
     @Autowired
@@ -18,7 +20,7 @@ public class AirportController {
 
     private static final Logger logger = LoggerFactory.getLogger(AirportController.class);
 
-    @GetMapping
+    @GetMapping("/all-airports")
     public @ResponseBody List<Airport> getAllAirports() {
         return airportService.getAllAirports();
     }
@@ -27,5 +29,8 @@ public class AirportController {
     public @ResponseBody Airport getAirportById(@PathVariable("iata-code") String iataCode) {
         return airportService.getAirportById(iataCode);
     }
+
+
+
 
 }

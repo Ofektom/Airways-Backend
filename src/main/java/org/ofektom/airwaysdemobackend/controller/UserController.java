@@ -1,23 +1,57 @@
 package org.ofektom.airwaysdemobackend.controller;
 
-import org.ofektom.airwaysdemobackend.dto.ProfileUpdateDto;
-import org.ofektom.airwaysdemobackend.service.UserService;
+import org.ofektom.airwaysdemobackend.dto.UserDto;
+import org.ofektom.airwaysdemobackend.model.User;
+import org.ofektom.airwaysdemobackend.serviceImpl.UserServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
+@RestController
+@CrossOrigin(origins = {"http://localhost:5173", "https://airway-ng.netlify.app"}, allowCredentials = "true")
+@RequestMapping("/api/v1/user")
 public class UserController {
-    private final UserService userService;
+    private UserServiceImpl userService;
 
-    public UserController(UserService userService) {
+    @Autowired
+    public UserController(UserServiceImpl userService) {
         this.userService = userService;
     }
 
-    @PutMapping("/update/{userId}")
-    public ResponseEntity<String> updateProfile(
-            @PathVariable Long userId,
-            @RequestBody ProfileUpdateDto profileUpdateDto){
-        return userService.updateProfile(userId, profileUpdateDto);
+    @PutMapping("/edit-user/{userId}")
+    @PreAuthorize("hasAnyRole()")
+    public ResponseEntity<User> editUserById(@RequestBody UserDto userEditDto,
+                                             @PathVariable Long userId){
+        User user = userService.editUser(userEditDto, userId);
+        return  new ResponseEntity<>(user, HttpStatus.OK);
+    }
+    @GetMapping("/get-user/{userId}")
+    @PreAuthorize("hasAnyRole()")
+    public ResponseEntity<Object> getUserById(@PathVariable Long userId) {
+        Optional<User> userOptional = userService.findUserById(userId);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            UserDto userDTO = convertToDto(user);
+            return ResponseEntity.ok(userDTO);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+    private UserDto convertToDto(User user) {
+        return new UserDto(
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getCountry(),
+                user.getPhoneNumber(),
+                user.getGender(),
+                user.getDateOfBirth()
+        );
     }
 }

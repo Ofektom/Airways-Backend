@@ -1,5 +1,6 @@
 package org.ofektom.airwaysdemobackend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
@@ -27,10 +28,12 @@ public class Airport {
     private String operationalHrs;
     private String state;
 
+@JsonIgnore
     @ManyToMany(mappedBy = "airports", fetch = FetchType.EAGER)
     private Set<Airline> airlines;
 
 
     public Airport(String value, String value1, String value2, String value3, String value4, String value5) {
     }
+
 }

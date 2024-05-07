@@ -1,9 +1,9 @@
 package org.ofektom.airwaysdemobackend.boot;
 
-import org.ofektom.airwaysdemobackend.model.Airline;
-import org.ofektom.airwaysdemobackend.model.Airport;
-import org.ofektom.airwaysdemobackend.repository.AirlineRepository;
-import org.ofektom.airwaysdemobackend.repository.AirportRepository;
+import org.airway.airwaybackend.model.Airline;
+import org.airway.airwaybackend.model.Airport;
+import org.airway.airwaybackend.repository.AirlineRepository;
+import org.airway.airwaybackend.repository.AirportRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

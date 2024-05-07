@@ -3,10 +3,10 @@ package org.ofektom.airwaysdemobackend.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.ofektom.airwaysdemobackend.model.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-
 
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -59,7 +59,12 @@ public class JwtUtils {
     public BiFunction<String, String, Boolean> isTokenValid = (token, username) ->
             isTokenExpired.apply(token) && Objects.equals(extractUsername.apply(token), username);
     public Function<UserDetails, String> createJwt = userDetails -> {
+        User user = (User) userDetails;
         Map<String, Object> claims = new HashMap<>();
+        claims.put("id", user.getId());
+        claims.put("role", user.getUserRole().name());
+        claims.put("firstName", user.getFirstName());
+        claims.put("lastName", user.getLastName());
         return Jwts.builder()
                 .signWith(getKey.get())
                 .claims(claims)
@@ -68,5 +73,6 @@ public class JwtUtils {
                 .expiration(expirationTime.get())
                 .compact();
     };
+
 
 }

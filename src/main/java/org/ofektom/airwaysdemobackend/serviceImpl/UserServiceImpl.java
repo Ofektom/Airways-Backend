@@ -1,11 +1,11 @@
 package org.ofektom.airwaysdemobackend.serviceImpl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.ofektom.airwaysdemobackend.dto.*;
 import org.ofektom.airwaysdemobackend.enums.Role;
-import org.ofektom.airwaysdemobackend.exception.InvalidTokenException;
-import org.ofektom.airwaysdemobackend.exception.PasswordsDontMatchException;
+import org.ofektom.airwaysdemobackend.exception.*;
 import org.ofektom.airwaysdemobackend.model.PasswordResetToken;
 import org.ofektom.airwaysdemobackend.model.User;
 import org.ofektom.airwaysdemobackend.model.VerificationToken;
@@ -14,9 +14,9 @@ import org.ofektom.airwaysdemobackend.repository.UserRepository;
 import org.ofektom.airwaysdemobackend.repository.VerificationTokenRepository;
 import org.ofektom.airwaysdemobackend.service.UserService;
 import org.ofektom.airwaysdemobackend.utils.JwtUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -24,141 +24,100 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;
+    private final JwtUtils jwtUtils;
     private final PasswordEncoder passwordEncoder;
-
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-
+    private final EmailServiceImpl emailService;
     private final VerificationTokenRepository verificationTokenRepository;
 
-    private final JwtUtils jwtUtils;
-    private final EmailSenderService emailSenderService;
-
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, PasswordResetTokenRepository passwordResetTokenRepository, VerificationTokenRepository verificationTokenRepository, JwtUtils jwtUtils, EmailSenderService emailSenderService) {
+    @Autowired
+    public UserServiceImpl(UserRepository userRepository, JwtUtils jwtUtils, PasswordEncoder passwordEncoder, PasswordResetTokenRepository passwordResetTokenRepository, EmailServiceImpl emailService, VerificationTokenRepository verificationTokenRepository) {
         this.userRepository = userRepository;
+        this.jwtUtils = jwtUtils;
         this.passwordEncoder = passwordEncoder;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.emailService = emailService;
         this.verificationTokenRepository = verificationTokenRepository;
-        this.jwtUtils = jwtUtils;
-        this.emailSenderService = emailSenderService;
+
     }
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Email not Found"));
+                .orElseThrow(() -> new UsernameNotFoundException("Email not Found"));
     }
 
     @Override
-    public User saveUser(SignupDto signupDto) {
-        if (userRepository.existsByEmail(signupDto.getEmail())) {
-            throw new RuntimeException("Email is already taken, try Logging In or Signup with another email" );
-        }
-        User user = new User();
+    public String logInUser(LoginDto userDto) {
+        UserDetails user = loadUserByUsername(userDto.getEmail());
 
-        if (!signupDto.getPassword().equals (signupDto.getConfirmPassword())){
-            throw new RuntimeException("Passwords are not the same");
-        }
-        if (!validatePassword(signupDto.getPassword())) {
-            throw new RuntimeException("Password does not meet the required criteria");
+        if (!user.isEnabled()) {
+            throw new UserNotVerifiedException("User is not verified, check email to Verify Registration");
         }
 
-        user.setPassword(passwordEncoder.encode(signupDto.getPassword()));
-        user.setConfirmPassword(passwordEncoder.encode(signupDto.getConfirmPassword()));
-        user.setFirstName(signupDto.getFirstName());
-        user.setLastName(signupDto.getLastName());
-        user.setPassportNumber(signupDto.getPhoneNumber());
-        user.setEmail(signupDto.getEmail());
-        user.setUserRole(Role.PASSENGER);
-        return userRepository.save(user);
-    }
+        if (!passwordEncoder.matches(userDto.getPassword(), user.getPassword())) {
+            throw new UserNotVerifiedException("Username and Password is Incorrect");
+        }
 
-    public boolean validatePassword(String password){
-        String capitalLetterPattern = "(?=.*[A-Z])";
-        String lowercaseLetterPattern = "(?=.*[a-z])";
-        String digitPattern = "(?=.*\\d)";
-        String symbolPattern = "(?=.*[@#$%^&+=])";
-        String lengthPattern = ".{8,}";
-
-        String regex = capitalLetterPattern + lowercaseLetterPattern + digitPattern + symbolPattern + lengthPattern;
-
-        Pattern pattern = Pattern.compile(regex);
-
-        Matcher matcher = pattern.matcher(password);
-
-        return matcher.matches();
+        return jwtUtils.createJwt.apply(user);
     }
 
 
 
-
-    @Override
-    public ResponseEntity<String> loginUser(LoginDto loginDto) {
-        UserDetails user = loadUserByUsername(loginDto.getEmail());
-        if (passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
-            String token = jwtUtils.createJwt.apply(user);
-            return new ResponseEntity<>(token, HttpStatus.OK);
-        }
-        return new ResponseEntity<>("Email or Password not correct!", HttpStatus.BAD_REQUEST);
+    public boolean checkIfValidOldPassword(User user, String oldPassword) {
+        return validatePassword(oldPassword) && passwordEncoder.matches(oldPassword, user.getPassword());
     }
 
-    @Override
-    public String logoutUser(Authentication authentication, HttpServletRequest request) {
-        if (authentication != null) {
-            SecurityContextHolder.getContext().setAuthentication(null);
-            SecurityContextHolder.clearContext();
-            request.getSession().invalidate();
-            return "User logged Out Successfully";
-        } else {
-            return "User not authenticated";
-        }
-    }
-
-    public void saveVerificationTokenForUser(User user, String token) {
-        VerificationToken verificationToken = new VerificationToken(user, token);
-        verificationTokenRepository.save(verificationToken);
-
-    }
-
-
-    public String validateVerificationToken(String token) {
-        VerificationToken verificationToken = verificationTokenRepository.findByToken(token);
-        if (verificationToken == null){
-            return "invalid";
-        }
-        User user = verificationToken.getUser();
-        Calendar cal = Calendar.getInstance();
-        if ((verificationToken.getExpirationTime().getTime()
-                - cal.getTime().getTime()) <=0) {
-            verificationTokenRepository.delete(verificationToken);
-            return "expired";
-        }
-        user.setIsEnabled(true);
+    public void changePassword(User user, String newPassword) {
+        user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-        return "valid";
     }
 
-    public VerificationToken generateNewVerificationToken(String oldToken) {
-        VerificationToken verificationToken = verificationTokenRepository.findByToken(oldToken);
-        verificationToken.setToken(UUID.randomUUID().toString());
-        verificationTokenRepository.save(verificationToken);
-        return verificationToken;
+    @Override
+    public String changeUserPassword(ChangePasswordDto passwordDto) {
+        User user = userRepository.findUserByEmail(passwordDto.getEmail());
+        if (user == null) {
+            return "User not found";
+        }
+
+//        THIS IS COMMENTED OUT BECAUSE THE ADMIN PASSWORD IS 1234
+
+//        if (!validatePassword(passwordDto.getOldPassword())) {
+//            return "Invalid Old Password. Password must meet the required criteria: at least 1 uppercase letter, 1 lowercase letter, 1 digit, 1 special character (@#$%^&+=), and minimum length of 8 characters";
+//        }
+
+        if (passwordDto.getOldPassword().equals(passwordDto.getNewPassword())) {
+            return "New password must be different from the old password";
+        }
+
+        if (!validatePassword(passwordDto.getNewPassword())) {
+            return "New password does not meet the required criteria: at least 1 uppercase letter, 1 lowercase letter, 1 digit, 1 special character (@#$%^&+=), and minimum length of 8 characters";
+        }
+
+        if (!passwordEncoder.matches(passwordDto.getOldPassword(),user.getPassword())){
+            return "Password does not match";
+         } else {
+        return "Password Changed Successfully ";
     }
 
+    }
 
+   
 
     public User findUserByEmail(String username) {
         return userRepository.findByEmail(username).orElseThrow(() -> new RuntimeException("Username Not Found" + username));
     }
-
-
     @Override
     public void createPasswordResetTokenForUser(User user, String token) {
         PasswordResetToken newlyCreatedPasswordResetToken = new PasswordResetToken(user, token);
@@ -190,10 +149,11 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         if (user == null) {
             throw new UsernameNotFoundException("User with email " + passwordDto.getEmail() + " not found");
         }
-        String token = UUID.randomUUID().toString();
-        createPasswordResetTokenForUser(user, token);
-        emailSenderService.passwordResetTokenMail(user, emailSenderService.applicationUrl(request), token);
+            String token = UUID.randomUUID().toString();
+            createPasswordResetTokenForUser(user, token);
+            emailService.passwordResetTokenMail(user, emailService.applicationUrl(request), token);
     }
+
 
     private Optional<User> getUserByPasswordReset(String token) {
         return Optional.ofNullable(passwordResetTokenRepository.findByToken(token).getUser());
@@ -225,49 +185,125 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         }
     }
 
-
     @Override
-    public ResponseEntity<String> updateProfile(Long userId, ProfileUpdateDto profileUpdateDto) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("user with ID " + userId + " is not found"));
+    public User saveUser(SignupDto signupDto) {
+        if (userRepository.existsByEmail(signupDto.getEmail())) {
+            throw new EmailIsTakenException("Email is already taken, try Logging In or Signup with another email" );
+        }
+        User user = new User();
 
-
-        if(profileUpdateDto.getFirstName() != null) {
-            user.setFirstName(profileUpdateDto.getFirstName());
+        if (!signupDto.getPassword().equals (signupDto.getConfirmPassword())){
+            throw new PasswordsDontMatchException("Passwords are not the same");
         }
-        if(profileUpdateDto.getLastName() != null) {
-            user.setLastName(profileUpdateDto.getLastName());
-        }
-        if(profileUpdateDto.getUsername() != null) {
-            user.setEmail(profileUpdateDto.getUsername());
-        }
-
-        if(profileUpdateDto.getPhoneNumber() != null) {
-            user.setPhoneNumber(profileUpdateDto.getPhoneNumber());
-        }
-        if(profileUpdateDto.getDateOfBirth() != null){
-            user.setDateOfBirth(profileUpdateDto.getDateOfBirth());
-        }
-        if(profileUpdateDto.getGender() != null){
-            user.setGender(profileUpdateDto.getGender());
-        }
-        if(profileUpdateDto.getState() != null){
-            user.setState(profileUpdateDto.getState());
-        }
-        if(profileUpdateDto.getCountry() !=null) {
-            user.setCountry(profileUpdateDto.getCountry());
-        }
-        if(profileUpdateDto.getPassportNumber() != null){
-            user.setPassportNumber(profileUpdateDto.getPassportNumber());
-        }
-        if(profileUpdateDto.getMembershipNo() != null){
-            user.setMembershipNo(profileUpdateDto.getMembershipNo());
+        if (!validatePassword(signupDto.getPassword())) {
+            throw new PasswordsDontMatchException("Password does not meet the required criteria");
         }
 
-        userRepository.save(user);
+        user.setPassword(passwordEncoder.encode(signupDto.getPassword()));
+        user.setConfirmPassword(passwordEncoder.encode(signupDto.getConfirmPassword()));
+        user.setFirstName(signupDto.getFirstName());
+        user.setLastName(signupDto.getLastName());
+        user.setCountry(signupDto.getCountry());
+        user.setPhoneNumber(signupDto.getPhoneNumber());
+        user.setEmail(signupDto.getEmail());
+        user.setUserRole(Role.PASSENGER);
+        user.setMembershipNo(generateMemberShip("ME"));
+        return userRepository.save(user);
+    }
+  
+    public boolean validatePassword(String password){
+        String capitalLetterPattern = "(?=.*[A-Z])";
+        String lowercaseLetterPattern = "(?=.*[a-z])";
+        String digitPattern = "(?=.*\\d)";
+        String symbolPattern = "(?=.*[@#$%^&+=])";
+        String lengthPattern = ".{8,}";
 
-        return new ResponseEntity<>("profile update successfully", HttpStatus.OK);
+        String regex = capitalLetterPattern + lowercaseLetterPattern + digitPattern + symbolPattern + lengthPattern;
+
+        Pattern pattern = Pattern.compile(regex);
+
+        Matcher matcher = pattern.matcher(password);
+
+        return matcher.matches();
     }
 
 
+    public void saveVerificationTokenForUser(User user, String token) {
+        VerificationToken verificationToken = new VerificationToken(user, token);
+        verificationTokenRepository.save(verificationToken);
 
+    }
+    public String validateVerificationToken(String token) {
+        VerificationToken verificationToken = verificationTokenRepository.findByToken(token);
+        if (verificationToken == null){
+            return "invalid";
+        }
+        User user = verificationToken.getUser();
+        Calendar cal = Calendar.getInstance();
+        if ((verificationToken.getExpirationTime().getTime()
+                - cal.getTime().getTime()) <=0) {
+            verificationTokenRepository.delete(verificationToken);
+            return "expired";
+        }
+        user.setIsEnabled(true);
+        userRepository.save(user);
+        return "valid";
+    }
+
+    public VerificationToken generateNewVerificationToken(String oldToken) {
+        VerificationToken verificationToken = verificationTokenRepository.findByToken(oldToken);
+        verificationToken.setToken(UUID.randomUUID().toString());
+        verificationTokenRepository.save(verificationToken);
+        return verificationToken;
+    }
+
+    public String generateMemberShip (String prefix) {
+        Random random = new Random();
+        int suffixLength = 6;
+        StringBuilder suffixBuilder = new StringBuilder();
+        for (int i = 0; i < suffixLength; i++) {
+            suffixBuilder.append(random.nextInt(10));
+        }
+        return prefix + suffixBuilder.toString();
+    }
+
+    @Override
+    public String logoutUser(HttpServletRequest request) {
+            SecurityContextHolder.getContext().setAuthentication(null);
+            SecurityContextHolder.clearContext();
+            request.getSession().invalidate();
+            return "User logged out Successfully";
+    }
+
+    @Override
+    public User editUser(UserDto userEditDto, Long userId) {
+        Long loggedInUserId = getUserIdFromAuthenticationContext();
+        log.debug("Editing user with ID: {}", loggedInUserId);
+
+        User userMakingEdit = this.userRepository.findById(loggedInUserId)
+                .orElseThrow(() -> new UserNotFoundException("User with ID: "+loggedInUserId+ " Not Found"));
+
+        if (!loggedInUserId.equals(userId)) {
+            throw new UserNotEligibleException("You are not eligible to edit this user");
+        }
+
+        // Update user's information
+        userMakingEdit.setFirstName(userEditDto.getFirstName());
+        userMakingEdit.setLastName(userEditDto.getLastName());
+        userMakingEdit.setCountry(userEditDto.getCountry());
+        userMakingEdit.setPhoneNumber(userEditDto.getPhoneNumber());
+        userMakingEdit.setGender(userEditDto.getGender());
+        userMakingEdit.setDateOfBirth(userEditDto.getDateOfBirth());
+        return userRepository.save(userMakingEdit);
+    }
+
+    private Long getUserIdFromAuthenticationContext() {
+        User loggedInUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return loggedInUser.getId();
+    }
+
+    @Override
+    public Optional<User> findUserById(Long userId) {
+        return userRepository.findById(userId);
+    }
 }
