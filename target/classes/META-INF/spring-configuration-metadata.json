@@ -1,0 +1,18 @@
+{
+  "groups": [
+    {
+      "name": "seed",
+      "type": "org.ofektom.airwaysdemobackend.config.SeedProperties",
+      "sourceType": "org.ofektom.airwaysdemobackend.config.SeedProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "seed.enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.ofektom.airwaysdemobackend.config.SeedProperties",
+      "defaultValue": false
+    }
+  ],
+  "hints": []
+}
