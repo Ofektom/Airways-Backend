@@ -1,5 +1,6 @@
 FROM openjdk:17
-COPY /target/Airways-Demo-Backend-0.0.1-SNAPSHOT.jar /app/Airway-Project.jar
+VOLUME /tmp
+COPY /target/*.jar /app.jar
 WORKDIR /app
 EXPOSE 8082
-CMD ["java", "-jar", "Airway-Project.jar"]
+CMD ["java", "-jar", "/app.jar"]
