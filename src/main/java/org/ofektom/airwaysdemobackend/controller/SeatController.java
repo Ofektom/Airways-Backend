@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/seat")
-@CrossOrigin(origins = {"http://localhost:5173", "https://airway-ng.netlify.app"}, allowCredentials = "true")
+@CrossOrigin(origins = {"http://localhost:5173", "https://airway-ng.netlify.app", "https://airway-front-end.onrender.com"}, allowCredentials = "true")
 public class SeatController {
         private final SeatServiceImpl seatServiceImp;
 
