@@ -1,21 +1,18 @@
-# Use an official OpenJDK runtime as the base image
-FROM openjdk:17
+# Use an official OpenJDK runtime as a parent image
+FROM openjdk:17-jdk-slim
 
-# Set the working directory
+# Set the working directory to /app
 WORKDIR /app
 
-# Copy the JAR file to the container
+# Copy the packaged jar file into the container
 COPY target/*.jar /app/app.jar
 
-# Install Nginx
-RUN apt-get update && apt-get install -y nginx
+# Expose the port specified by the PORT environment variable
+ENV PORT 8082
+EXPOSE 8082
 
-# Copy custom Nginx configuration file
-COPY nginx-backend.conf /etc/nginx/conf.d/default.conf
+# Ensure the application uses the correct port and listens on all interfaces
+ENV SERVER_PORT ${PORT}
 
-# Expose the port specified by Render or default to 80
-ENV PORT 80
-EXPOSE 80
-
-# Start Nginx and the Spring Boot application
-CMD ["sh", "-c", "nginx -g 'daemon off;' & java -Dserver.port=8082 -jar /app/app.jar"]
+# Start the Spring Boot application
+CMD ["java", "-jar", "-Dserver.port=${SERVER_PORT}", "/app/app.jar"]
